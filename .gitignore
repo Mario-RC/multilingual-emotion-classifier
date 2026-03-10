@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local training artifacts
+output/
+
+# Generated datasets (reproducible via prepare_data.py)
+data/dataset_multilingual_emotion.csv
+data/train_dataset.csv
+data/val_dataset.csv
+data/test_dataset.csv
