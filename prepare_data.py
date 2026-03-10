@@ -142,8 +142,8 @@ def split_train_val_test(
         class_samples_en = df[(df["label"] == label) & (df["language"] == "en")]
         class_samples_es = df[(df["label"] == label) & (df["language"] == "es")]
 
-        class_samples_en = class_samples_en[~class_samples_en.duplicated(subset=["text"])]
-        class_samples_es = class_samples_es[~class_samples_es.duplicated(subset=["text"])]
+        class_samples_en = class_samples_en[~class_samples_en["text"].duplicated()]
+        class_samples_es = class_samples_es[~class_samples_es["text"].duplicated()]
 
         test_data_en = _sample_exact(class_samples_en, num_samples_per_class_test, random_state)
         test_data_es = _sample_exact(class_samples_es, num_samples_per_class_test, random_state)
