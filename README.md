@@ -23,7 +23,7 @@ The system utilizes 7 normalized basic emotional categories. These are derived d
 
 ## Dataset Source
 
-The DAILYD and MPATHY CSV resources come from: [`CHANEL-JSALT-2020/datasets`](`https://github.com/CHANEL-JSALT-2020/datasets`)
+The DAILYD and MPATHY CSV resources come from: [`CHANEL-JSALT-2020/datasets`](https://github.com/CHANEL-JSALT-2020/datasets)
 
 The original notebook workflow (`emotional_classifier.ipynb`) has been split into
 four scripts for a cleaner and reproducible pipeline:
