@@ -275,6 +275,8 @@ def main() -> None:
     val_dataset = EmotionDataset(val_encodings, val_df["label_id"].values)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device.type == "cuda":
+        print(f"Using GPU: {torch.cuda.get_device_name(0)}")
 
     id2label = {i: label for i, label in enumerate(label_encoder.classes_.tolist())}
     label2id = {label: i for i, label in id2label.items()}

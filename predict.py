@@ -33,6 +33,8 @@ def load_model_and_tokenizer(model_dir: str):
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device.type == "cuda":
+        print(f"Using GPU: {torch.cuda.get_device_name(0)}")
     model.to(device)
     model.eval()
     return model, tokenizer, device
