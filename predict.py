@@ -10,6 +10,8 @@ import numpy as np
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from benchmark import sentence_en, sentence_es
+
 
 def parse_args() -> argparse.Namespace:
     """Parse inference options from command line."""
@@ -18,6 +20,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--text", action="append", help="Text input. Repeat --text for multiple sentences.")
     parser.add_argument("--text-file", help="Optional file with one sentence per line.")
     parser.add_argument("--max-length", type=int, default=128, help="Max token length.")
+    parser.add_argument(
+        "--run-benchmark",
+        action="store_true",
+        help="Evaluate quick benchmark sets from benchmark.py.",
+    )
     return parser.parse_args()
 
 
@@ -78,6 +85,26 @@ def predict_emotion(
     return predicted_label, confidence_score
 
 
+def run_quick_benchmark(
+    examples: list[list[str]],
+    name: str,
+    model,
+    tokenizer,
+    device: torch.device,
+    label_names: list[str],
+    max_length: int,
+) -> None:
+    """Compute simple accuracy over helper sentence lists."""
+    correct = 0
+    for target_label, text in examples:
+        pred_label, _ = predict_emotion(text, model, tokenizer, device, label_names, max_length)
+        if target_label == pred_label:
+            correct += 1
+
+    accuracy = 100.0 * correct / len(examples)
+    print(f"{name} quick-set accuracy: {accuracy:.2f}% ({correct}/{len(examples)})")
+
+
 def main() -> None:
     """Run prediction for user-provided text."""
     args = parse_args()
@@ -107,8 +134,13 @@ def main() -> None:
         print(f"Predicted: {predicted_label}")
         print(f"Confidence: {confidence:.4f}\n")
 
-    if not inputs:
-        print("No input provided. Use --text or --text-file.")
+    if args.run_benchmark:
+        print("Quick benchmark results")
+        run_quick_benchmark(sentence_es, "Spanish", model, tokenizer, device, label_names, args.max_length)
+        run_quick_benchmark(sentence_en, "English", model, tokenizer, device, label_names, args.max_length)
+
+    if not inputs and not args.run_benchmark:
+        print("No input provided. Use --text, --text-file, or --run-benchmark.")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ __pycache__/
 
 # Local training artifacts
 output/
+mec/
 
 # Generated datasets (reproducible via prepare_data.py)
 data/dataset_multilingual_emotion.csv

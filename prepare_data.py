@@ -9,6 +9,7 @@ and saves CSV files under the data directory.
 import argparse
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.utils import resample
 
@@ -99,6 +100,25 @@ def load_dailydialog(data_dir: Path) -> pd.DataFrame:
     df["label"] = data_label["emotion"].replace({"no emotion": "neutral"})
 
     return df[["uid", "label", "text", "translation"]].reset_index(drop=True)
+
+
+def validate_required_files(data_dir: Path) -> None:
+    """Fail fast when expected source CSV files are missing."""
+    required_files = [
+        data_dir / "MPATHY" / "MPATHY_translation_en2es.csv",
+        data_dir / "MPATHY" / "MPATHY_dialoginfo.csv",
+        data_dir / "DAILYD" / "DAILYD_translation_en2es.csv",
+        data_dir / "DAILYD" / "DAILYD_dialoginfo.csv",
+    ]
+
+    missing = [path for path in required_files if not path.exists()]
+    if missing:
+        missing_text = "\n".join(f"- {path}" for path in missing)
+        raise FileNotFoundError(
+            "Missing required source files:\n"
+            f"{missing_text}\n"
+            "Please verify your data directory structure."
+        )
 
 
 def build_multilingual_dataset(ed_df: pd.DataFrame, dd_df: pd.DataFrame) -> pd.DataFrame:
@@ -223,6 +243,24 @@ def print_distribution(df: pd.DataFrame, name: str) -> None:
     print(df.groupby(["language", "label"]).size().unstack(fill_value=0))
 
 
+def save_label_distribution_plot(df: pd.DataFrame, name: str, output_path: Path) -> None:
+    """Save a simple class distribution bar chart to disk."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    counts = df["label"].value_counts().sort_index()
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    counts.plot(kind="bar", ax=ax, color="#ef8a62")
+    ax.set_title(f"{name} class distribution")
+    ax.set_xlabel("Label")
+    ax.set_ylabel("Count")
+    ax.grid(axis="y", alpha=0.2)
+
+    plt.tight_layout()
+    fig.savefig(output_path, dpi=180)
+    plt.close(fig)
+    print(f"Saved distribution plot to: {output_path}")
+
+
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments for dataset preparation."""
     parser = argparse.ArgumentParser(description="Prepare multilingual emotion datasets.")
@@ -231,6 +269,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-val", type=int, default=250, help="Samples per class/language for validation set.")
     parser.add_argument("--neutral-frac", type=float, default=0.6, help="Downsampling fraction for neutral class.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for deterministic sampling.")
+    parser.add_argument(
+        "--save-plots",
+        action="store_true",
+        help="Save dataset distribution plots to data/plots.",
+    )
     return parser.parse_args()
 
 
@@ -238,6 +281,7 @@ def main() -> None:
     """Run the full preprocessing, splitting, and balancing pipeline."""
     args = parse_args()
     data_dir = Path(args.data_dir)
+    validate_required_files(data_dir)
 
     upsample_ratios = {
         "anger": 2,
@@ -253,8 +297,14 @@ def main() -> None:
 
     data_multi = build_multilingual_dataset(ed_df, dd_df)
     dataset_multi_path = data_dir / "dataset_multilingual_emotion.csv"
+    dataset_legacy_path = data_dir / "dataset_multi.csv"
     data_multi.to_csv(dataset_multi_path, index=False)
+    data_multi.to_csv(dataset_legacy_path, index=False)
     print(f"Saved multilingual dataset to: {dataset_multi_path}")
+    print(f"Saved notebook-compatible dataset to: {dataset_legacy_path}")
+
+    if args.save_plots:
+        save_label_distribution_plot(data_multi, "Multilingual", data_dir / "plots" / "dataset_multilingual_distribution.png")
 
     train_df, val_df, test_df = split_train_val_test(
         data_multi,
@@ -275,6 +325,11 @@ def main() -> None:
     )
 
     print_distribution(train_df, "Train (after balance)")
+
+    if args.save_plots:
+        save_label_distribution_plot(train_df, "Train", data_dir / "plots" / "train_distribution.png")
+        save_label_distribution_plot(val_df, "Validation", data_dir / "plots" / "validation_distribution.png")
+        save_label_distribution_plot(test_df, "Test", data_dir / "plots" / "test_distribution.png")
 
     train_path = data_dir / "train_dataset.csv"
     val_path = data_dir / "val_dataset.csv"

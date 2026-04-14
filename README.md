@@ -3,7 +3,7 @@
 This project trains and evaluates a multilingual emotion classifier (English + Spanish)
 using DailyDialog and EmpatheticDialogues-derived CSV files.
 
-Dataset source note:
+Dataset source:
 
 - The DAILYD and MPATHY CSV resources come from `CHANEL-JSALT-2020/datasets`:
 	`https://github.com/CHANEL-JSALT-2020/datasets`
@@ -17,7 +17,9 @@ four scripts for a cleaner and reproducible pipeline:
 - `predict.py`
 
 Additionally, `benchmark.py` contains curated EN/ES benchmark sentences used by
-`evaluate.py --run-benchmark`.
+`evaluate.py --run-benchmark` and `predict.py --run-benchmark`.
+
+The notebook `emotional_classifier.ipynb` remains fully functional and can still be used.
 
 ## 1. Requirements
 
@@ -27,7 +29,24 @@ Install dependencies (preferably in a virtual environment):
 pip install -r requirements.txt
 ```
 
-## 2. Data Preparation
+## 2. Hyperparameter Config
+
+The pipeline reads defaults from:
+
+- `configs/hyperparameters.json`
+
+You can edit this file to set dataset, training, and pipeline hyperparameters
+without changing Python scripts.
+
+Use a custom config file path if needed:
+
+```bash
+CONFIG_FILE=configs/hyperparameters.json bash run_pipeline.sh
+```
+
+Environment variables still override JSON values when explicitly provided.
+
+## 3. Data Preparation
 
 Generate multilingual dataset and train/validation/test splits:
 
@@ -41,14 +60,23 @@ Useful options:
 python3 prepare_data.py --num-test 250 --num-val 250 --neutral-frac 0.6 --seed 42
 ```
 
+Save distribution plots:
+
+```bash
+python3 prepare_data.py --save-plots
+```
+
 Outputs in `data/`:
 
 - `dataset_multilingual_emotion.csv`
+- `dataset_multi.csv` (legacy notebook-compatible filename)
 - `train_dataset.csv`
 - `val_dataset.csv`
 - `test_dataset.csv`
 
-## 3. Training
+Optional plot outputs in `data/plots/` when `--save-plots` is enabled.
+
+## 4. Training
 
 Train the classifier from prepared splits:
 
@@ -73,9 +101,17 @@ Main artifacts saved under `--output-dir`:
 - tokenizer files
 - `label_classes.npy`
 - `eval_results.json`
+- `classification_report.txt` (written by evaluation)
 - timestamped run folders in `runs/run_YYYYMMDD_HHMMSS/` (logs + checkpoints)
+- `runs/run_YYYYMMDD_HHMMSS/training_metrics.png`
 
-## 4. Evaluation
+Resume from latest checkpoint in `--output-dir/runs`:
+
+```bash
+python3 train.py --output-dir output/model --resume-from-checkpoint
+```
+
+## 5. Evaluation
 
 Evaluate the trained model on the test split:
 
@@ -87,13 +123,17 @@ By default, the confusion matrix image is saved to:
 
 - `output/model/confusion_matrix.png`
 
+Per-class metrics report is saved to:
+
+- `output/model/classification_report.txt`
+
 Run quick benchmark sets from `benchmark.py`:
 
 ```bash
 python3 evaluate.py --model-dir output/model --run-benchmark
 ```
 
-## 5. Prediction
+## 6. Prediction
 
 Predict one or multiple texts:
 
@@ -118,7 +158,13 @@ From a file (one sentence per line):
 python3 predict.py --model-dir output/model --text-file input_sentences.txt
 ```
 
-## 6. Full Pipeline Script
+Run benchmark quick sets with prediction path:
+
+```bash
+python3 predict.py --model-dir output/model --run-benchmark
+```
+
+## 7. Full Pipeline Script
 
 Run the complete workflow with one command:
 
@@ -126,14 +172,27 @@ Run the complete workflow with one command:
 bash run_pipeline.sh
 ```
 
+The pipeline executes all runtime scripts in order:
+
+- `prepare_data.py`
+- `train.py`
+- `evaluate.py`
+- `evaluate.py --run-benchmark`
+- `predict.py --run-benchmark`
+
 You can override model settings through environment variables:
 
 ```bash
 MODEL_NAME=FacebookAI/xlm-roberta-large MODEL_DIR=output/model bash run_pipeline.sh
 ```
 
-## Notes
+Additional environment variables supported by `run_pipeline.sh`:
 
-- Keep your dataset CSV files under `data/` as expected by defaults, or pass custom paths.
-- If training is unstable due to GPU memory, reduce `--batch-size`.
-- The scripts are deterministic when using the default seed (`42`) where sampling applies.
+- `BATCH_SIZE` (default `32`)
+- `EPOCHS` (default `3.0`)
+- `LEARNING_RATE` (default `5e-6`)
+- `DROPOUT` (default `0.2`)
+- `SEED` (default `42`)
+- `MAX_LENGTH` (default `128`)
+- `SAVE_PLOTS` (`1`/`0`, default `1`)
+- `RESUME_FROM_CHECKPOINT` (`1`/`0`, default `0`)

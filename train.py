@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
@@ -111,6 +112,93 @@ def compute_metrics(eval_pred):
     }
 
 
+def find_latest_checkpoint(model_output_dir: Path) -> Path | None:
+    """Return the latest checkpoint path under output_dir/runs, if any."""
+    checkpoint_candidates = sorted(model_output_dir.glob("runs/run_*/results/checkpoint-*"))
+    return checkpoint_candidates[-1] if checkpoint_candidates else None
+
+
+def save_training_metrics_plot(log_history: list[dict], output_path: Path) -> None:
+    """Recreate the notebook-style training/eval metrics plot from trainer logs."""
+    epochs: list[float] = []
+    train_loss: list[float] = []
+    val_loss: list[float] = []
+    accuracy: list[float] = []
+    f1_values: list[float] = []
+    precision_values: list[float] = []
+    recall_values: list[float] = []
+
+    for log in log_history:
+        if "epoch" in log:
+            epochs.append(float(log["epoch"]))
+        if "loss" in log:
+            train_loss.append(float(log["loss"]))
+        if "eval_loss" in log:
+            val_loss.append(float(log["eval_loss"]))
+        if "eval_accuracy" in log:
+            accuracy.append(float(log["eval_accuracy"]))
+        if "eval_f1" in log:
+            f1_values.append(float(log["eval_f1"]))
+        if "eval_precision" in log:
+            precision_values.append(float(log["eval_precision"]))
+        if "eval_recall" in log:
+            recall_values.append(float(log["eval_recall"]))
+
+    min_len = min(
+        len(epochs),
+        len(train_loss),
+        len(val_loss),
+        len(accuracy),
+        len(f1_values),
+        len(precision_values),
+        len(recall_values),
+    )
+
+    if min_len == 0:
+        print("Skipping metrics plot: not enough values in trainer log history.")
+        return
+
+    epochs = epochs[:min_len]
+    train_loss = train_loss[:min_len]
+    val_loss = val_loss[:min_len]
+    accuracy = accuracy[:min_len]
+    f1_values = f1_values[:min_len]
+    precision_values = precision_values[:min_len]
+    recall_values = recall_values[:min_len]
+
+    fig, axs = plt.subplots(3, 1, figsize=(8, 10))
+
+    axs[0].plot(epochs, train_loss, label="Training Loss", marker="o")
+    axs[0].plot(epochs, val_loss, label="Validation Loss", marker="o")
+    axs[0].set_title("Training and Validation Loss")
+    axs[0].set_xlabel("Epoch")
+    axs[0].set_ylabel("Loss")
+    axs[0].legend()
+    axs[0].grid(alpha=0.25)
+
+    axs[1].plot(epochs, accuracy, label="Accuracy", marker="o", color="g")
+    axs[1].set_title("Accuracy over Epochs")
+    axs[1].set_xlabel("Epoch")
+    axs[1].set_ylabel("Accuracy")
+    axs[1].legend()
+    axs[1].grid(alpha=0.25)
+
+    axs[2].plot(epochs, f1_values, label="F1 Score", marker="o", color="b")
+    axs[2].plot(epochs, precision_values, label="Precision", marker="o", color="r")
+    axs[2].plot(epochs, recall_values, label="Recall", marker="o", color="orange")
+    axs[2].set_title("F1, Precision, and Recall over Epochs")
+    axs[2].set_xlabel("Epoch")
+    axs[2].set_ylabel("Score")
+    axs[2].legend()
+    axs[2].grid(alpha=0.25)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.tight_layout()
+    fig.savefig(output_path, dpi=180)
+    plt.close(fig)
+    print(f"Saved training metrics plot to: {output_path}")
+
+
 def parse_args() -> argparse.Namespace:
     """Parse training configuration from command line."""
     parser = argparse.ArgumentParser(description="Train multilingual emotion classifier.")
@@ -126,6 +214,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability for hidden and attention layers.")
     parser.add_argument("--logging-steps", type=int, default=500, help="Logging frequency in steps.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        action="store_true",
+        help="Resume from the latest checkpoint found under output-dir/runs.",
+    )
     return parser.parse_args()
 
 
@@ -135,9 +228,23 @@ def main() -> None:
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    run_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    run_dir = output_dir / "runs" / run_name
-    run_dir.mkdir(parents=True, exist_ok=True)
+
+    resume_checkpoint = None
+    run_dir = None
+    if args.resume_from_checkpoint:
+        resume_checkpoint = find_latest_checkpoint(output_dir)
+        if resume_checkpoint is not None:
+            run_dir = resume_checkpoint.parent.parent
+            print(f"Resuming training from checkpoint: {resume_checkpoint}")
+        else:
+            print("No checkpoint found. Starting a fresh run.")
+
+    if run_dir is None:
+        run_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        run_dir = output_dir / "runs" / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        run_name = run_dir.name
 
     train_df = pd.read_csv(args.train_file)
     val_df = pd.read_csv(args.val_file)
@@ -221,8 +328,9 @@ def main() -> None:
     num_training_steps = int(len(train_dataset) / args.batch_size * args.epochs)
     trainer.create_optimizer_and_scheduler(num_training_steps=max(num_training_steps, 1))
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=str(resume_checkpoint) if resume_checkpoint else None)
     eval_results = trainer.evaluate()
+    save_training_metrics_plot(trainer.state.log_history, run_dir / "training_metrics.png")
 
     # Save reusable artifacts for evaluate.py and predict.py.
     model.save_pretrained(output_dir)
