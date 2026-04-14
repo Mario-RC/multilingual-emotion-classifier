@@ -13,10 +13,20 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from benchmark import sentence_en, sentence_es
 
 
+def default_model_dir(model_name: str) -> Path:
+    """Build the default model directory from model_name."""
+    return Path("output") / model_name
+
+
 def parse_args() -> argparse.Namespace:
     """Parse inference options from command line."""
     parser = argparse.ArgumentParser(description="Predict emotions from text.")
-    parser.add_argument("--model-dir", default="output/model", help="Path to trained model directory.")
+    parser.add_argument("--model-name", default="FacebookAI/xlm-roberta-large", help="HF model checkpoint name.")
+    parser.add_argument(
+        "--model-dir",
+        default=None,
+        help="Path to trained model directory. Defaults to output/<model_name>.",
+    )
     parser.add_argument("--text", action="append", help="Text input. Repeat --text for multiple sentences.")
     parser.add_argument("--text-file", help="Optional file with one sentence per line.")
     parser.add_argument("--max-length", type=int, default=128, help="Max token length.")
@@ -111,8 +121,10 @@ def main() -> None:
     """Run prediction for user-provided text."""
     args = parse_args()
 
-    model, tokenizer, device = load_model_and_tokenizer(args.model_dir)
-    label_names = get_label_names(model, args.model_dir)
+    model_dir = Path(args.model_dir) if args.model_dir else default_model_dir(args.model_name)
+
+    model, tokenizer, device = load_model_and_tokenizer(str(model_dir))
+    label_names = get_label_names(model, str(model_dir))
 
     inputs: list[str] = []
     if args.text:

@@ -118,6 +118,11 @@ def find_latest_checkpoint(model_output_dir: Path) -> Path | None:
     return checkpoint_candidates[-1] if checkpoint_candidates else None
 
 
+def default_model_output_dir(model_name: str) -> Path:
+    """Build the default output directory using the model_name string."""
+    return Path("output") / model_name
+
+
 def save_training_metrics_plot(log_history: list[dict], output_path: Path) -> None:
     """Recreate the notebook-style training/eval metrics plot from trainer logs."""
     epochs: list[float] = []
@@ -205,7 +210,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-file", default="data/train_dataset.csv", help="Path to train CSV file.")
     parser.add_argument("--val-file", default="data/val_dataset.csv", help="Path to validation CSV file.")
     parser.add_argument("--model-name", default="FacebookAI/xlm-roberta-large", help="HF model checkpoint.")
-    parser.add_argument("--output-dir", default="output/model", help="Output model directory.")
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help="Output model directory. Defaults to output/<model_name>.",
+    )
     parser.add_argument("--max-length", type=int, default=128, help="Tokenizer max sequence length.")
     parser.add_argument("--batch-size", type=int, default=32, help="Per-device batch size.")
     parser.add_argument("--epochs", type=float, default=3.0, help="Number of training epochs.")
@@ -226,7 +235,7 @@ def main() -> None:
     """Run the full supervised training flow and save artifacts."""
     args = parse_args()
 
-    output_dir = Path(args.output_dir)
+    output_dir = Path(args.output_dir) if args.output_dir else default_model_output_dir(args.model_name)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     resume_checkpoint = None

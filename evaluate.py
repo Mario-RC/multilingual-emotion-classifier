@@ -18,10 +18,20 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from benchmark import sentence_en, sentence_es
 
 
+def default_model_dir(model_name: str) -> Path:
+    """Build the default model directory from model_name."""
+    return Path("output") / model_name
+
+
 def parse_args() -> argparse.Namespace:
     """Parse evaluation settings from command line."""
     parser = argparse.ArgumentParser(description="Evaluate emotion classifier on test data.")
-    parser.add_argument("--model-dir", default="output/model", help="Path to trained model directory.")
+    parser.add_argument("--model-name", default="FacebookAI/xlm-roberta-large", help="HF model checkpoint name.")
+    parser.add_argument(
+        "--model-dir",
+        default=None,
+        help="Path to trained model directory. Defaults to output/<model_name>.",
+    )
     parser.add_argument("--test-file", default="data/test_dataset.csv", help="Path to test CSV file.")
     parser.add_argument("--max-length", type=int, default=128, help="Max token length.")
     parser.add_argument(
@@ -31,13 +41,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--cm-output",
-        default="output/model/plots/confusion_matrix.png",
-        help="Path to save confusion matrix image.",
+        default=None,
+        help="Path to save confusion matrix image. Defaults to <model_dir>/plots/confusion_matrix.png.",
     )
     parser.add_argument(
         "--classification-report-output",
-        default="output/model/classification_report.txt",
-        help="Path to save per-class precision/recall/F1 report.",
+        default=None,
+        help="Path to save per-class precision/recall/F1 report. Defaults to <model_dir>/classification_report.txt.",
     )
     return parser.parse_args()
 
@@ -192,11 +202,14 @@ def cm_analysis(
 def main() -> None:
     """Run test set evaluation and report metrics."""
     args = parse_args()
+    model_dir = Path(args.model_dir) if args.model_dir else default_model_dir(args.model_name)
+    cm_output = args.cm_output or str(model_dir / "plots" / "confusion_matrix.png")
+    report_output = args.classification_report_output or str(model_dir / "classification_report.txt")
 
     test_df = pd.read_csv(args.test_file)
     y_true = test_df["label"].tolist()
 
-    model, tokenizer, device = load_model_and_tokenizer(args.model_dir)
+    model, tokenizer, device = load_model_and_tokenizer(str(model_dir))
     model_label_names = get_label_names(model)
     y_pred = predict_batch(test_df["text"].tolist(), model, tokenizer, device, args.max_length)
 
@@ -224,12 +237,12 @@ def main() -> None:
     print("\nPer-class classification report")
     print(report)
 
-    report_path = Path(args.classification_report_output)
+    report_path = Path(report_output)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report + "\n", encoding="utf-8")
     print(f"Saved classification report to: {report_path}")
 
-    cm_analysis(y_true, y_pred, labels, args.cm_output)
+    cm_analysis(y_true, y_pred, labels, cm_output)
 
     if args.run_benchmark:
         print("\nQuick benchmark results")
