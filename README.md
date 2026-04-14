@@ -3,10 +3,27 @@
 This project trains and evaluates a multilingual emotion classifier (English + Spanish)
 using DailyDialog and EmpatheticDialogues-derived CSV files.
 
-Dataset source:
+This project develops a multilingual emotion recognition system (English and Spanish) that classifies user utterances into fine-grained emotional categories. The main goal is to move beyond traditional sentiment analysis, enabling dialogue systems to adapt their responses to the user's emotional state for a more empathetic and context-aware interaction. To achieve this, data from the *EmpatheticDialogues* and *DailyDialog* corpora were consolidated and processed, resulting in a robust dataset of over 360,000 interactions.
 
-- The DAILYD and MPATHY CSV resources come from `CHANEL-JSALT-2020/datasets`:
-	`https://github.com/CHANEL-JSALT-2020/datasets`
+To address the natural class imbalance in the distribution of emotions, resampling techniques were implemented on the training set. Specifically, we applied downsampling to reduce the majority "neutral" class by 60%, and upsampling for minority classes such as disgust, surprise, and fear to ensure equitable representation. This strategy guarantees that the classifier learns to accurately distinguish both high-frequency and less common emotional states in both languages.
+
+## Emotion Mapping
+
+The system utilizes 7 normalized basic emotional categories. These are derived directly from the *DailyDialog* format, while the original 32 labels from *EmpatheticDialogues* were grouped and mapped into these seven categories, discarding ambiguous or underrepresented ones.
+
+| Mapped Emotion | Original Labels (*EmpatheticDialogues*) |
+| :--- | :--- |
+| **Anger** | angry, annoyed, furious, jealous |
+| **Disgust** | disgusted |
+| **Fear** | afraid, anxious, apprehensive, terrified |
+| **Happiness** | caring, confident, content, excited, faithful, grateful, joyful, hopeful, proud, trusting |
+| **Sadness** | sad, ashamed, devastated, disappointed, embarrassed, guilty, lonely, nostalgic, sentimental |
+| **Surprise** | impressed, surprised |
+| **Removed** | anticipating, prepared |
+
+## Dataset Source
+
+The DAILYD and MPATHY CSV resources come from: [`CHANEL-JSALT-2020/datasets`](`https://github.com/CHANEL-JSALT-2020/datasets`)
 
 The original notebook workflow (`emotional_classifier.ipynb`) has been split into
 four scripts for a cleaner and reproducible pipeline:
@@ -207,3 +224,28 @@ Additional environment variables supported by `run_pipeline.sh`:
 - `MAX_LENGTH` (default `128`)
 - `SAVE_PLOTS` (`1`/`0`, default `1`)
 - `RESUME_FROM_CHECKPOINT` (`1`/`0`, default `0`)
+
+## Model Performance
+
+Below is the performance comparison of the four multilingual models in two evaluation settings: (1) the multilingual test set (reporting Accuracy, macro-averaged F1, Precision, and Recall); and (2) the synthetic GPT-4 benchmark (reporting Accuracy for English and Spanish utterances to assess cross-lingual generalization).
+
+| Model | Accuracy (%) | F1 | Precision | Recall | GPT-4 (ES) (%) | GPT-4 (EN) (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| bert-cased | 54.57 | 0.54 | 0.55 | 0.55 | 72.91 | 70.81 |
+| bert-uncased | 55.60 | 0.55 | 0.57 | 0.56 | 74.25 | 74.16 |
+| xlm-roberta-base | 60.34 | 0.60 | 0.61 | 0.60 | 82.61 | 76.17 |
+| **xlm-roberta-large** | **68.11** | **0.68** | **0.69** | **0.68** | **85.95** | **79.19** |
+
+## Confusion Matrix (xlm-roberta-large)
+
+The following confusion matrix illustrates the behavior of the `xlm-roberta-large` model on the GPT-4 generated test set, highlighting the areas where the model succeeds and where it tends to confuse the different emotional labels.
+
+![Confusion matrix for xlm-roberta-large](output/model/plots/confusion_matrix.png)
+
+## Citation
+
+This work is detailed in **Section 4.4.3 (User Emotion Recognition)** of the following PhD dissertation. If you use this project or dataset, please cite:
+
+> **Personal Assistant with Emotional and Multilingual Capabilities for Social Robots**
+> **M. Rodríguez-Cantelar**
+> PhD Dissertation, Universidad Politécnica de Madrid [(UPM)](https://oa.upm.es/91661/), 2025
