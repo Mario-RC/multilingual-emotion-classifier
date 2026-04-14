@@ -117,13 +117,15 @@ Example with explicit model and output path:
 ```bash
 python3 train.py \
 	--model-name FacebookAI/xlm-roberta-large \
-	--output-dir output/model \
 	--batch-size 32 \
 	--epochs 3 \
 	--learning-rate 5e-6
 ```
 
-Main artifacts saved under `--output-dir`:
+By default, artifacts are saved under `output/<model_name>`.
+If needed, you can override with `--output-dir`.
+
+Main artifacts saved under the resolved output directory:
 
 - model weights and config
 - tokenizer files
@@ -133,10 +135,10 @@ Main artifacts saved under `--output-dir`:
 - timestamped run folders in `runs/run_YYYYMMDD_HHMMSS/` (logs + checkpoints)
 - `runs/run_YYYYMMDD_HHMMSS/training_metrics.png`
 
-Resume from latest checkpoint in `--output-dir/runs`:
+Resume from latest checkpoint in `output/<model_name>/runs` (or `--output-dir/runs` if overridden):
 
 ```bash
-python3 train.py --output-dir output/model --resume-from-checkpoint
+python3 train.py --model-name FacebookAI/xlm-roberta-large --resume-from-checkpoint
 ```
 
 ## 5. Evaluation
@@ -144,21 +146,21 @@ python3 train.py --output-dir output/model --resume-from-checkpoint
 Evaluate the trained model on the test split:
 
 ```bash
-python3 evaluate.py --model-dir output/model
+python3 evaluate.py --model-name FacebookAI/xlm-roberta-large
 ```
 
 By default, the confusion matrix image is saved to:
 
-- `output/model/plots/confusion_matrix.png`
+- `output/<model_name>/plots/confusion_matrix.png`
 
 Per-class metrics report is saved to:
 
-- `output/model/classification_report.txt`
+- `output/<model_name>/classification_report.txt`
 
 Run quick benchmark sets from `benchmark.py`:
 
 ```bash
-python3 evaluate.py --model-dir output/model --run-benchmark
+python3 evaluate.py --model-name FacebookAI/xlm-roberta-large --run-benchmark
 ```
 
 ## 6. Prediction
@@ -166,14 +168,14 @@ python3 evaluate.py --model-dir output/model --run-benchmark
 Predict one or multiple texts:
 
 ```bash
-python3 predict.py --model-dir output/model --text "Hola, ¿qué tal estás?"
+python3 predict.py --model-name FacebookAI/xlm-roberta-large --text "Hola, ¿qué tal estás?"
 ```
 
 Multiple texts:
 
 ```bash
 python3 predict.py \
-	--model-dir output/model \
+	--model-name FacebookAI/xlm-roberta-large \
 	--text "I feel great today." \
 	--text "Me siento genial hoy." \
 	--text "I am worried about tomorrow." \
@@ -183,13 +185,13 @@ python3 predict.py \
 From a file (one sentence per line):
 
 ```bash
-python3 predict.py --model-dir output/model --text-file input_sentences.txt
+python3 predict.py --model-name FacebookAI/xlm-roberta-large --text-file input_sentences.txt
 ```
 
 Run benchmark quick sets with prediction path:
 
 ```bash
-python3 predict.py --model-dir output/model --run-benchmark
+python3 predict.py --model-name FacebookAI/xlm-roberta-large --run-benchmark
 ```
 
 ## 7. Full Pipeline Script
@@ -211,10 +213,13 @@ The pipeline executes all runtime scripts in order:
 You can override model settings through environment variables:
 
 ```bash
-MODEL_NAME=FacebookAI/xlm-roberta-large MODEL_DIR=output/model bash run_pipeline.sh
+MODEL_NAME=FacebookAI/xlm-roberta-large MODEL_DIR=output/FacebookAI/xlm-roberta-large bash run_pipeline.sh
 ```
 
 Additional environment variables supported by `run_pipeline.sh`:
+
+- `MODEL_DIR` (optional). If not provided, the pipeline uses `output/<MODEL_NAME>` by default.
+- Legacy config value `pipeline.model_dir: "output/model"` is still accepted and automatically mapped to `output/<MODEL_NAME>`.
 
 - `BATCH_SIZE` (default `32`)
 - `EPOCHS` (default `3.0`)
@@ -240,7 +245,7 @@ Below is the performance comparison of the four multilingual models in two evalu
 
 The following confusion matrix illustrates the behavior of the `xlm-roberta-large` model on the GPT-4 generated test set, highlighting the areas where the model succeeds and where it tends to confuse the different emotional labels.
 
-![Confusion matrix for xlm-roberta-large](output/model/plots/confusion_matrix.png)
+![Confusion matrix for xlm-roberta-large](output/FacebookAI/xlm-roberta-large/plots/confusion_matrix.png)
 
 ## Citation
 
