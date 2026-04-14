@@ -290,24 +290,33 @@ def main() -> None:
     model.config.hidden_dropout_prob = args.dropout
     model.config.attention_probs_dropout_prob = args.dropout
 
-    training_args = TrainingArguments(
-        output_dir=str(run_dir / "results"),
-        run_name=run_name,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=args.learning_rate,
-        per_device_train_batch_size=args.batch_size,
-        per_device_eval_batch_size=args.batch_size,
-        num_train_epochs=args.epochs,
-        weight_decay=args.weight_decay,
-        logging_dir=str(run_dir / "logs"),
-        logging_steps=args.logging_steps,
-        save_total_limit=2,
-        metric_for_best_model="f1",
-        load_best_model_at_end=True,
-        report_to="none",
-        seed=args.seed,
-    )
+    try:
+        training_args = TrainingArguments(
+            output_dir=str(run_dir / "results"),
+            run_name=run_name,
+            evaluation_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=args.learning_rate,
+            per_device_train_batch_size=args.batch_size,
+            per_device_eval_batch_size=args.batch_size,
+            num_train_epochs=args.epochs,
+            weight_decay=args.weight_decay,
+            logging_dir=str(run_dir / "logs"),
+            logging_steps=args.logging_steps,
+            save_total_limit=2,
+            metric_for_best_model="f1",
+            load_best_model_at_end=True,
+            report_to="none",
+            seed=args.seed,
+        )
+    except ImportError as exc:
+        if "accelerate" in str(exc).lower():
+            raise SystemExit(
+                "Missing dependency: accelerate>=0.26.0. "
+                "Run `pip install -r requirements.txt` or "
+                "`pip install 'accelerate>=0.26.0'`."
+            ) from exc
+        raise
 
     # Compute inverse-frequency class weights and normalize them.
     label_counts = train_df["label_id"].value_counts().sort_index().values
