@@ -149,7 +149,7 @@ python3 evaluate.py --model-dir output/model
 
 By default, the confusion matrix image is saved to:
 
-- `output/model/confusion_matrix.png`
+- `output/model/plots/confusion_matrix.png`
 
 Per-class metrics report is saved to:
 

@@ -31,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--cm-output",
-        default="output/model/confusion_matrix.png",
+        default="output/model/plots/confusion_matrix.png",
         help="Path to save confusion matrix image.",
     )
     parser.add_argument(
