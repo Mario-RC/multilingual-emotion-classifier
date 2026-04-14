@@ -38,6 +38,17 @@ The pipeline reads defaults from:
 You can edit this file to set dataset, training, and pipeline hyperparameters
 without changing Python scripts.
 
+Supported models are defined in the same JSON file under `train.allowed_models`:
+
+```json
+"allowed_models": [
+	"google-bert/bert-base-multilingual-cased",
+	"google-bert/bert-base-multilingual-uncased",
+	"FacebookAI/xlm-roberta-base",
+	"FacebookAI/xlm-roberta-large"
+]
+```
+
 Use a custom config file path if needed:
 
 ```bash
