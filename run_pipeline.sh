@@ -34,8 +34,8 @@ def get(path, default):
 
 
 values = {
-	"CFG_MODEL_DIR": get("pipeline.model_dir", "output/model"),
 	"CFG_MODEL_NAME": get("train.model_name", "FacebookAI/xlm-roberta-large"),
+	"CFG_MODEL_DIR": get("pipeline.model_dir", ""),
 	"CFG_BATCH_SIZE": get("train.batch_size", 32),
 	"CFG_EPOCHS": get("train.epochs", 3.0),
 	"CFG_LEARNING_RATE": get("train.learning_rate", 5e-6),
@@ -58,8 +58,17 @@ for key, value in values.items():
 PY
 )"
 
-MODEL_DIR="${MODEL_DIR:-$CFG_MODEL_DIR}"
 MODEL_NAME="${MODEL_NAME:-$CFG_MODEL_NAME}"
+
+if [[ -n "${MODEL_DIR:-}" ]]; then
+	MODEL_DIR="$MODEL_DIR"
+elif [[ -z "$CFG_MODEL_DIR" || "$CFG_MODEL_DIR" == "output/model" ]]; then
+	# Keep backward compatibility while migrating legacy default to output/<MODEL_NAME>.
+	MODEL_DIR="output/$MODEL_NAME"
+else
+	MODEL_DIR="$CFG_MODEL_DIR"
+fi
+
 BATCH_SIZE="${BATCH_SIZE:-$CFG_BATCH_SIZE}"
 EPOCHS="${EPOCHS:-$CFG_EPOCHS}"
 LEARNING_RATE="${LEARNING_RATE:-$CFG_LEARNING_RATE}"

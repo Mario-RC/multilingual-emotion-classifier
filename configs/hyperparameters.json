@@ -21,7 +21,7 @@
     "max_length": 128
   },
   "pipeline": {
-    "model_dir": "output/model",
+    "model_dir": "",
     "seed": 42,
     "resume_from_checkpoint": false
   }
