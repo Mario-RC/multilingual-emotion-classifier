@@ -6,3 +6,5 @@ torch==2.6.0
 accelerate>=0.26.0
 seaborn==0.13.2
 matplotlib==3.10.1
+ipykernel==7.2.0
+ipywidgets==8.1.8
