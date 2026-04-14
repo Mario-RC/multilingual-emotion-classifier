@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from benchmark import sentence_en, sentence_es
@@ -33,6 +33,11 @@ def parse_args() -> argparse.Namespace:
         "--cm-output",
         default="output/model/confusion_matrix.png",
         help="Path to save confusion matrix image.",
+    )
+    parser.add_argument(
+        "--classification-report-output",
+        default="output/model/classification_report.txt",
+        help="Path to save per-class precision/recall/F1 report.",
     )
     return parser.parse_args()
 
@@ -204,7 +209,24 @@ def main() -> None:
     print(f"Precision: {precision:.4f}")
     print(f"Recall   : {recall:.4f}")
 
-    labels = sorted(test_df["label"].unique().tolist())
+    labels = [label for label in model_label_names if label in set(y_true)]
+
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=labels,
+        target_names=labels,
+        digits=4,
+        zero_division=0,
+    )
+    print("\nPer-class classification report")
+    print(report)
+
+    report_path = Path(args.classification_report_output)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(report + "\n", encoding="utf-8")
+    print(f"Saved classification report to: {report_path}")
+
     cm_analysis(y_true, y_pred, labels, args.cm_output)
 
     if args.run_benchmark:

@@ -1,0 +1,28 @@
+{
+  "prepare_data": {
+    "data_dir": "data",
+    "num_test": 250,
+    "num_val": 250,
+    "neutral_frac": 0.6,
+    "save_plots": true
+  },
+  "train": {
+    "model_name": "FacebookAI/xlm-roberta-large",
+    "allowed_models": [
+      "google-bert/bert-base-multilingual-cased",
+      "google-bert/bert-base-multilingual-uncased",
+      "FacebookAI/xlm-roberta-base",
+      "FacebookAI/xlm-roberta-large"
+    ],
+    "batch_size": 32,
+    "epochs": 3.0,
+    "learning_rate": 0.000005,
+    "dropout": 0.2,
+    "max_length": 128
+  },
+  "pipeline": {
+    "model_dir": "output/model",
+    "seed": 42,
+    "resume_from_checkpoint": false
+  }
+}
