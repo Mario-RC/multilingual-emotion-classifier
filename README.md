@@ -131,9 +131,9 @@ Main artifacts saved under the resolved output directory:
 - tokenizer files
 - `label_classes.npy`
 - `eval_results.json`
-- `classification_report.txt` (written by evaluation)
+- `classification_report.txt`
 - timestamped run folders in `runs/run_YYYYMMDD_HHMMSS/` (logs + checkpoints)
-- `runs/run_YYYYMMDD_HHMMSS/training_metrics.png`
+- `plots/training_metrics.png`
 
 Resume from latest checkpoint in `output/<model_name>/runs` (or `--output-dir/runs` if overridden):
 
