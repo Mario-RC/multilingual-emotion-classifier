@@ -1,4 +1,4 @@
-# Emotional Classifier
+# Multilingual Emotional Classifier
 
 This project trains and evaluates a multilingual emotion classifier (English + Spanish)
 using DailyDialog and EmpatheticDialogues-derived CSV files.
