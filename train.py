@@ -301,6 +301,10 @@ def main() -> None:
     model.config.hidden_dropout_prob = args.dropout
     model.config.attention_probs_dropout_prob = args.dropout
 
+    # Keep run logs alongside checkpoints for each timestamped run.
+    logs_dir = run_dir / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         training_args = TrainingArguments(
             output_dir=str(run_dir / "results"),
@@ -312,7 +316,7 @@ def main() -> None:
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
             weight_decay=args.weight_decay,
-            logging_dir=str(run_dir / "logs"),
+            logging_dir=str(logs_dir),
             logging_steps=args.logging_steps,
             save_total_limit=2,
             metric_for_best_model="f1",
@@ -350,7 +354,9 @@ def main() -> None:
 
     trainer.train(resume_from_checkpoint=str(resume_checkpoint) if resume_checkpoint else None)
     eval_results = trainer.evaluate()
-    save_training_metrics_plot(trainer.state.log_history, run_dir / "training_metrics.png")
+
+    # Save training metrics only in the model-level plots folder.
+    save_training_metrics_plot(trainer.state.log_history, output_dir / "plots" / "training_metrics.png")
 
     # Save reusable artifacts for evaluate.py and predict.py.
     model.save_pretrained(output_dir)
