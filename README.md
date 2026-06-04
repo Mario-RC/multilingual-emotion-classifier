@@ -247,6 +247,15 @@ The following confusion matrix illustrates the behavior of the `xlm-roberta-larg
 
 ![Confusion matrix for xlm-roberta-large](output/FacebookAI/xlm-roberta-large/plots/confusion_matrix.png)
 
+## Hugging Face Models
+
+The fine-tuned XLM-RoBERTa models are available on Hugging Face:
+
+| Model | Hugging Face |
+| :--- | :---: |
+| xlm-roberta-base | [mario-rc/xlm-roberta-base-multilingual-emotion-classifier](https://huggingface.co/mario-rc/xlm-roberta-base-multilingual-emotion-classifier) |
+| xlm-roberta-large | [mario-rc/xlm-roberta-large-multilingual-emotion-classifier](https://huggingface.co/mario-rc/xlm-roberta-large-multilingual-emotion-classifier) |
+
 ## Citation
 
 This work is detailed in **Section 4.4.3 (User Emotion Recognition)** of the following PhD dissertation. If you use this project or dataset, please cite:
