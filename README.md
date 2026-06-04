@@ -253,10 +253,10 @@ The fine-tuned multilingual emotion classifiers are available on Hugging Face:
 
 | Model | Hugging Face |
 | :--- | :---: |
-| bert-base-multilingual-cased | [mario-rc/multilingual-emotional-classifier-bert-base-cased](https://huggingface.co/mario-rc/multilingual-emotional-classifier-bert-base-cased) |
-| bert-base-multilingual-uncased | [mario-rc/multilingual-emotional-classifier-bert-base-uncased](https://huggingface.co/mario-rc/multilingual-emotional-classifier-bert-base-uncased) |
-| xlm-roberta-base | [mario-rc/multilingual-emotional-classifier-xlm-roberta-base](https://huggingface.co/mario-rc/multilingual-emotional-classifier-xlm-roberta-base) |
-| xlm-roberta-large | [mario-rc/multilingual-emotional-classifier-xlm-roberta-large](https://huggingface.co/mario-rc/multilingual-emotional-classifier-xlm-roberta-large) |
+| bert-base-multilingual-cased | [Emotional Classifier BERT-Base-Multilingual-Cased](https://huggingface.co/mario-rc/emotional-classifier-bert-base-multilingual-cased) |
+| bert-base-multilingual-uncased | [Emotional Classifier BERT-Base-Multilingual-Uncased](https://huggingface.co/mario-rc/emotional-classifier-bert-base-multilingual-uncased) |
+| xlm-roberta-base | [Multilingual Emotional Classifier XLM-RoBERTa-Base](https://huggingface.co/mario-rc/multilingual-emotional-classifier-xlm-roberta-base) |
+| xlm-roberta-large | [Multilingual Emotional Classifier XLM-RoBERTa-Large](https://huggingface.co/mario-rc/multilingual-emotional-classifier-xlm-roberta-large) |
 
 ## Citation
 
