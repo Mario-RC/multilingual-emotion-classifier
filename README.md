@@ -102,6 +102,10 @@ Outputs in `data/`:
 - `val_dataset.csv`
 - `test_dataset.csv`
 
+Generated CSV files preserve the legacy column layout `label,text,language,dataset`.
+The `dataset` column identifies the source corpus with `ED` for EmpatheticDialogues
+and `DD` for DailyDialog.
+
 Optional plot outputs in `data/plots/` when `--save-plots` is enabled.
 
 ## 4. Training

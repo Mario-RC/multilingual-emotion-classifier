@@ -81,8 +81,9 @@ def load_empathetic_dialogues(data_dir: Path) -> pd.DataFrame:
 
     # Remap fine-grained labels to the reduced emotion set.
     df["label"] = df["label"].replace(EMPATHETIC_LABEL_MAP)
+    df["dataset"] = "ED"
 
-    return df[["uid", "label", "text", "translation"]].reset_index(drop=True)
+    return df[["uid", "label", "text", "translation", "dataset"]].reset_index(drop=True)
 
 
 def load_dailydialog(data_dir: Path) -> pd.DataFrame:
@@ -98,8 +99,9 @@ def load_dailydialog(data_dir: Path) -> pd.DataFrame:
     df["text"] = data_seg["SEG"]
     df["translation"] = data_seg["translation"]
     df["label"] = data_label["emotion"].replace({"no emotion": "neutral"})
+    df["dataset"] = "DD"
 
-    return df[["uid", "label", "text", "translation"]].reset_index(drop=True)
+    return df[["uid", "label", "text", "translation", "dataset"]].reset_index(drop=True)
 
 
 def validate_required_files(data_dir: Path) -> None:
@@ -125,13 +127,14 @@ def build_multilingual_dataset(ed_df: pd.DataFrame, dd_df: pd.DataFrame) -> pd.D
     """Merge corpora and duplicate each row into EN and ES text variants."""
     data = pd.concat([ed_df, dd_df], ignore_index=True)
 
-    data_en = data[["label", "text"]].copy()
+    data_en = data[["label", "text", "dataset"]].copy()
     data_en["language"] = "en"
 
-    data_es = data[["label", "translation"]].copy().rename(columns={"translation": "text"})
+    data_es = data[["label", "translation", "dataset"]].copy().rename(columns={"translation": "text"})
     data_es["language"] = "es"
 
     data_multi = pd.concat([data_en, data_es], ignore_index=True)
+    data_multi = data_multi[["label", "text", "language", "dataset"]]
 
     # Remove repeated utterances to prevent leakage and duplicated samples.
     data_multi = data_multi.drop_duplicates(subset=["text"]).reset_index(drop=True)
